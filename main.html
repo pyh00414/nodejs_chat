@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+
+<script>
+
+    var socket = io.connect('http://localhost:3000');
+
+    socket.on('connect', function () {
+        socket.emit('newUser', prompt('insert your name'));
+    });
+
+    socket.on('updateUserCount', function (clientCount) {
+
+        // 현재 방에 접속한 회원의 숫자를 보여준다.
+        if (clientCount) {
+            $('#userCount').text("현재 접속중인 회원 수 : " + clientCount);
+        }
+    });
+
+    // 방을 클릭하거나, 새로운방을 만들 경우, 이후의 액션을 담당.
+
+    socket.on('roomAction', function (rooms, currentRoom) {
+
+        $('#rooms').empty();
+        $('#chat').empty();
+
+        if (!currentRoom) {
+            $.each(rooms, function (key, value) {
+
+
+                $('#rooms').append('<div><a href="#" onclick="changeRoom(\'' + value + '\')">' + value + '</a></div>');
+
+            });
+        } else {
+            $.each(rooms, function (key, value) {
+                if (value == currentRoom) {
+                    $('#rooms').append('<div>' + value + '</div>');
+                }
+                else {
+                    $('#rooms').append('<div><a href="#" onclick="changeRoom(\'' + value + '\')">' + value + '</a></div>');
+                }
+            });
+        }
+    });
+
+    socket.on('updateChat', function (user, text) {
+        $('#chat').append('<b>' + user + ':</b> ' + text + '<br>');
+    });
+
+    $(function () {
+
+
+        $('#send').click(function () {
+            var msg = $('#message').val();
+            $('#message').val('');
+            socket.emit('sendMsg', msg);
+        });
+
+        $('#message').keypress(function (e) {
+            if (e.which == 13) {
+                $(this).blur();
+                $('#send').focus().click();
+            }
+        });
+    });
+
+    function makeRoom() {
+        socket.emit('makeRoom', prompt('insert Room name'));
+    }
+
+    function changeRoom(room) {
+
+        socket.emit('changeRoom', room);
+    }
+
+
+</script>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <style>
+        #container {
+            width: 700px;
+            height: 400px;
+            margin: auto;
+            border: 1px solid;
+        }
+
+        #left {
+            width: 25%;
+            height: 100%;
+            border-right: 1px solid;
+            float: left;
+        }
+
+        #center {
+            width: 50%;
+            height: 100%;
+            border-right: 1px solid;
+            float: left;
+        }
+
+        #chat {
+            width: 100%;
+            height: 93%;
+            border-right: 1px solid;
+            float: left;
+        }
+
+        #footer {
+            width: 100%;
+            height: 7%;
+            border-top: 1px solid;
+            float: left;
+        }
+
+        #right {
+            width: 24.7%;
+            height: 100%;
+            float: left;
+        }
+
+        #userCount {
+            color: #aa1900;
+            width: 100%;
+            height: 5%;
+            border-bottom: 1px solid;
+        }
+
+        #makeRoomBtn {
+            width: 100%;
+            height: 7%;
+            border-bottom: 1px solid;
+        }
+
+        #rooms {
+            width: 100%;
+            hieght: 92%;
+        }
+
+    </style>
+
+</head>
+<body>
+<div id="container">
+
+    <div id="left">
+        <div id="makeRoomBtn">
+            <button type="button" onclick="makeRoom()" style="width:100%;height: 30px;">방만들기</button>
+        </div>
+
+        <div id="rooms">
+
+        </div>
+    </div>
+
+
+    <div id="center">
+        <div id="chat"></div>
+        <div id="footer">
+            <input id="message" style="width:80%;height:75%"/>
+            <input type="button" id="send" value="SEND" style="width:17%;height:100%"/>
+        </div>
+    </div>
+
+    <div id="right">
+        <div id="userCount"></div>
+        <div id="user"></div>
+    </div>
+
+
+</div>
+
+</body>
+</html>
+
